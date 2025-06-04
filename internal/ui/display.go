@@ -138,7 +138,7 @@ func ConfirmContinueOnError() bool {
 		// Fallback to basic text confirmation if huh fails
 		fmt.Print(lipgloss.NewStyle().Foreground(gold).Render("Continue with remaining commands? (y/N): "))
 		var responseText string
-		fmt.Scanln(&responseText)
+		_, _ = fmt.Scanln(&responseText)
 		responseText = strings.ToLower(strings.TrimSpace(responseText))
 		return responseText == "y" || responseText == "yes"
 	}
