@@ -6,13 +6,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	// Version will be set during build time
+	Version = "dev"
+	// Commit will be set during build time  
+	Commit = "none"
+	// Date will be set during build time
+	Date = "unknown"
+)
+
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show Oracle version and feature information",
 	Long:  `Display version information and available features for Oracle CLI tool.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Oracle CLI Tool")
-		fmt.Println("Version: 1.0.0")
+		fmt.Printf("Version: %s\n", Version)
+		fmt.Printf("Commit: %s\n", Commit)
+		fmt.Printf("Built: %s\n", Date)
 		fmt.Println("Features:")
 		fmt.Println("  - AI-powered question answering with Google Gemini")
 		fmt.Println("  - Terminal UI with styled output")

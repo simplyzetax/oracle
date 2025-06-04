@@ -14,6 +14,18 @@ Oracle is a CLI tool that allows you to ask questions to AI models (currently Ge
 
 ## Installation
 
+### Homebrew (macOS/Linux)
+
+```bash
+# Add the tap
+brew tap simplyzetax/oracle
+
+# Install oracle
+brew install oracle
+```
+
+### From Source
+
 1. Clone the repository
 2. Set your Google AI API key:
    ```bash
@@ -23,6 +35,28 @@ Oracle is a CLI tool that allows you to ask questions to AI models (currently Ge
    ```bash
    go build -o oracle
    ```
+
+### Using Go Install
+
+```bash
+go install github.com/simplyzetax/oracle@latest
+```
+
+### Download Binary
+
+Download the latest binary from the [releases page](https://github.com/simplyzetax/oracle/releases).
+
+## Setup
+
+After installation, set your Google AI API key:
+
+```bash
+export GOOGLE_AI_API_KEY="your-api-key-here"
+# Add to your shell config file (.zshrc, .bashrc, etc.) to persist
+echo 'export GOOGLE_AI_API_KEY="your-api-key-here"' >> ~/.zshrc
+```
+
+On first run, Oracle will offer to set up a convenient `oa` alias for you.
 
 ## Usage
 
