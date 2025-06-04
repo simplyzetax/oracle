@@ -20,9 +20,7 @@ Examples:
   oracle ask "Explain quantum computing in simple terms"
   oracle ask`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Show the beautiful Oracle banner
-		ui.ShowBanner()
-		
+
 		var question string
 
 		if len(args) == 0 {

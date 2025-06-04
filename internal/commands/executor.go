@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
@@ -75,7 +74,7 @@ func PromptToExecute(commands []string) []string {
 		return nil
 	}
 
-	ui.ShowCommandsDetected(commands)
+	ui.ShowCommandsTable(commands) // Updated from ShowCommandsDetected
 
 	var toExecute []string
 
@@ -90,7 +89,7 @@ func PromptToExecute(commands []string) []string {
 
 // ExecuteCommand runs a shell command with proper output handling
 func ExecuteCommand(command string) error {
-	ui.ShowExecutingCommand(command)
+	ui.ShowExecutionStatus(fmt.Sprintf("Executing: %s", command), "executing") // Updated
 
 	// Use the user's default shell
 	shell := os.Getenv("SHELL")
@@ -105,11 +104,11 @@ func ExecuteCommand(command string) error {
 
 	err := cmd.Run()
 	if err != nil {
-		ui.ShowCommandError(command, err)
+		ui.ShowExecutionStatus(fmt.Sprintf("Command failed: %s - %v", command, err), "error") // Updated
 		return err
 	}
 
-	ui.ShowCommandSuccess(command)
+	ui.ShowExecutionStatus(fmt.Sprintf("Command completed: %s", command), "success") // Updated
 	return nil
 }
 
@@ -119,27 +118,18 @@ func ExecuteCommands(commands []string) {
 		return
 	}
 
-	ui.ShowStartingExecution(len(commands))
+	ui.ShowExecutionStatus(fmt.Sprintf("Starting execution of %d commands...", len(commands)), "info") // Updated
 
 	for i, cmd := range commands {
-		ui.ShowCommandProgress(i+1, len(commands))
+		ui.ShowExecutionStatus(fmt.Sprintf("Command %d of %d:", i+1, len(commands)), "info") // Updated
 
 		if err := ExecuteCommand(cmd); err != nil {
 			if !ui.ConfirmContinueOnError() {
-				ui.ShowExecutionStopped()
+				ui.ShowExecutionStatus("Execution stopped by user.", "warning") // Updated
 				return
 			}
 		}
 	}
 
-	ui.ShowExecutionComplete()
-}
-
-// ConfirmWithUser prompts for yes/no confirmation using basic input
-func ConfirmWithUser(prompt string) bool {
-	fmt.Print(prompt + " (y/N): ")
-	reader := bufio.NewReader(os.Stdin)
-	response, _ := reader.ReadString('\n')
-	response = strings.ToLower(strings.TrimSpace(response))
-	return response == "y" || response == "yes"
+	ui.ShowExecutionStatus("All commands executed.", "success") // Updated
 }

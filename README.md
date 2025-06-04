@@ -1,16 +1,16 @@
 # Oracle CLI Tool
 
-Oracle is a beautiful CLI tool that allows you to ask questions to AI models (currently Gemini) with streaming responses and elegant UI styling.
+Oracle is a CLI tool that allows you to ask questions to AI models (currently Gemini) with streaming responses and elegant UI styling.
 
 ## Features
 
-- 🤖 **AI-Powered**: Chat with Google's Gemini models
-- 🎨 **Beautiful UI**: Styled with Charm's Lipgloss for elegant terminal output
-- 🔄 **Streaming**: Real-time response streaming
-- 💭 **Interactive**: Prompt for questions if none provided
-- ⚡ **Command Execution**: Oracle can detect and run shell commands (with --execute flag)
-- 🛡️ **Safe Execution**: Command detection with user confirmation and safety checks
-- ⚙️ **Configurable**: Multiple models and API key options
+- **AI-Powered**: Chat with Google's Gemini models
+- **Beautiful UI**: Styled with Charm's Lipgloss for elegant terminal output
+- **Streaming**: Real-time response streaming
+- **Interactive**: Prompt for questions if none provided
+- **Command Execution**: Oracle can detect and run shell commands (with --execute flag)
+- **Safe Execution**: Command detection with user confirmation and safety checks
+- **Configurable**: Multiple models and API key options
 
 ## Installation
 
@@ -59,9 +59,9 @@ oracle ask "Hello world" --api-key your-key-here
 oracle ask "How do I create a new Git repository?" --execute
 
 # Oracle might suggest and offer to run:
-# $ git init
-# $ git add .
-# $ git commit -m "Initial commit"
+# git init
+# git add .
+# git commit -m "Initial commit"
 ```
 
 ## Project Structure

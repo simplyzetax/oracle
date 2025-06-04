@@ -5,152 +5,252 @@ import (
 	"os"
 	"strings"
 
+	"github.com/charmbracelet/glamour"
+	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 )
 
+// Color palette
 var (
-	// Color and style definitions
-	primaryColor = lipgloss.Color("#00D9FF")
-	errorColor   = lipgloss.Color("#FF6B6B")
-	successColor = lipgloss.Color("#51CF66")
-	mutedColor   = lipgloss.Color("#8B949E")
+	// Brand colors
+	blue   = lipgloss.Color("#00D9FF")
+	gold   = lipgloss.Color("#F59E0B")
+	green  = lipgloss.Color("#10B981")
+	orange = lipgloss.Color("#F97316")
+	yellow = lipgloss.Color("#FBBF24")
 
-	// Styles
-	headerStyle = lipgloss.NewStyle().
-			Foreground(primaryColor).
+	// Neutral colors
+	slate = lipgloss.Color("#64748B")
+	pearl = lipgloss.Color("#F8FAFC")
+
+	// Status colors
+	statusErrorColor   = lipgloss.Color("#FF6B6B")
+	statusSuccessColor = lipgloss.Color("#51CF66")
+)
+
+// Styles
+var (
+	// BannerStyle for the main application banner
+	BannerStyle = lipgloss.NewStyle().
+			Foreground(blue).
 			Bold(true).
-			Border(lipgloss.NormalBorder(), false, false, true, false).
-			BorderForeground(primaryColor).
+			Align(lipgloss.Center).
 			MarginBottom(1)
 
-	errorStyle = lipgloss.NewStyle().
-			Foreground(errorColor).
+	// ResponseStyle for AI responses
+	ResponseStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(slate).
+			Padding(1, 2).
+			MarginTop(1).
+			MarginBottom(1)
+
+	// HeaderStyle for question headers
+	HeaderStyle = lipgloss.NewStyle().
+			Foreground(yellow).
 			Bold(true).
-			SetString("❌ ")
+			Border(lipgloss.NormalBorder(), false, false, true, false).
+			BorderForeground(blue).
+			MarginBottom(1)
 
-	successStyle = lipgloss.NewStyle().
-			Foreground(successColor).
-			Bold(true).
-			SetString("✅ ")
+	// ErrorStyle for error messages
+	ErrorStyle = lipgloss.NewStyle().
+			Foreground(statusErrorColor).
+			Bold(true)
 
-	questionStyle = lipgloss.NewStyle().
-			Foreground(mutedColor).
-			Italic(true).
-			SetString("❓ ")
+	// SuccessStyle for success messages
+	SuccessStyle = lipgloss.NewStyle().
+			Foreground(statusSuccessColor).
+			Bold(true)
 
-	responseStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FFFFFF")).
-			MarginLeft(2)
-
-	// Command execution UI functions
-
-	commandStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FFA500")).
-			Bold(true).
-			SetString("⚡ ")
-
-	warningStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FFD700")).
-			Bold(true).
-			SetString("⚠️  ")
+	// QuestionStyle for displaying the user's question
+	QuestionStyle = lipgloss.NewStyle().
+			Foreground(slate).
+			Italic(true)
 )
 
-// ShowError displays an error message with styling
+// Markdown renderer
+var markdownRenderer *glamour.TermRenderer
+
+func init() {
+	var err error
+	markdownRenderer, err = glamour.NewTermRenderer(
+		glamour.WithAutoStyle(),
+		glamour.WithWordWrap(80),
+	)
+	if err != nil {
+		markdownRenderer = nil // Fallback to nil if glamour fails
+	}
+}
+
+// StreamMarkdownText outputs streaming text
+func StreamMarkdownText(text string) {
+	fmt.Print(text)
+}
+
+// RenderFinalResponse renders the complete response with markdown support
+func RenderFinalResponse(fullText string) {
+	if markdownRenderer == nil {
+		fmt.Println(ResponseStyle.Render(fullText))
+		return
+	}
+	rendered, err := markdownRenderer.Render(fullText)
+	if err != nil {
+		fmt.Println(ResponseStyle.Render(fullText))
+		return
+	}
+	fmt.Println(ResponseStyle.Render(rendered))
+}
+
+// ConfirmExecution asks user to confirm command execution using huh
+func ConfirmExecution(command string) bool {
+	var confirm bool
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewConfirm().
+				Title("Execute this command?").
+				Description(fmt.Sprintf("Command: %s", command)).
+				Affirmative("Yes, execute").
+				Negative("No, skip").
+				Value(&confirm),
+		),
+	)
+	err := form.Run()
+	if err != nil {
+		// Fallback to basic text confirmation if huh fails
+		fmt.Print(lipgloss.NewStyle().Foreground(gold).Render(fmt.Sprintf("Execute: %s (y/N): ", command)))
+		var responseText string
+		fmt.Scanln(&responseText)
+		responseText = strings.ToLower(strings.TrimSpace(responseText))
+		return responseText == "y" || responseText == "yes"
+	}
+	return confirm
+}
+
+// ConfirmContinueOnError asks if execution should continue after error using huh
+func ConfirmContinueOnError() bool {
+	var continueExec bool
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewConfirm().
+				Title("Command failed! Continue?").
+				Affirmative("Yes, continue").
+				Negative("No, stop").
+				Value(&continueExec),
+		),
+	)
+	err := form.Run()
+	if err != nil {
+		// Fallback to basic text confirmation if huh fails
+		fmt.Print(lipgloss.NewStyle().Foreground(gold).Render("Continue with remaining commands? (y/N): "))
+		var responseText string
+		fmt.Scanln(&responseText)
+		responseText = strings.ToLower(strings.TrimSpace(responseText))
+		return responseText == "y" || responseText == "yes"
+	}
+	return continueExec
+}
+
+// ShowCommandsTable displays commands in a table
+func ShowCommandsTable(commands []string) {
+	if len(commands) == 0 {
+		return
+	}
+
+	header := lipgloss.NewStyle().
+		Foreground(gold).
+		Bold(true).
+		SetString("Detected Executable Commands:")
+
+	fmt.Println(header.Render())
+	fmt.Println()
+
+	rows := make([][]string, len(commands))
+	for i, cmd := range commands {
+		rows[i] = []string{
+			fmt.Sprintf("%d", i+1),
+			cmd,
+		}
+	}
+
+	t := table.New().
+		Border(lipgloss.RoundedBorder()).
+		BorderStyle(lipgloss.NewStyle().Foreground(gold)).
+		StyleFunc(func(row, col int) lipgloss.Style {
+			if row == table.HeaderRow {
+				return lipgloss.NewStyle().
+					Foreground(gold).
+					Bold(true).
+					Align(lipgloss.Center)
+			}
+			if col == 0 { // Index column
+				return lipgloss.NewStyle().
+					Foreground(blue).
+					Bold(true).
+					Align(lipgloss.Center).
+					Width(5)
+			}
+			return lipgloss.NewStyle().Padding(0, 1) // Command column
+		}).
+		Headers("#", "Command").
+		Rows(rows...)
+
+	fmt.Println(t.Render())
+	fmt.Println()
+}
+
+// ShowExecutionStatus displays execution status messages
+func ShowExecutionStatus(message string, statusType string) {
+	var style lipgloss.Style
+	var prefix string
+
+	switch statusType {
+	case "success":
+		style = lipgloss.NewStyle().Foreground(green).Bold(true)
+		prefix = "Success:"
+	case "error":
+		style = lipgloss.NewStyle().Foreground(statusErrorColor).Bold(true)
+		prefix = "Error:"
+	case "executing":
+		style = lipgloss.NewStyle().Foreground(orange).Bold(true)
+		prefix = "Executing:"
+	case "warning":
+		style = lipgloss.NewStyle().Foreground(gold).Bold(true)
+		prefix = "Warning:"
+	default: // "info" or any other type
+		style = lipgloss.NewStyle().Foreground(blue).Bold(true)
+		prefix = "Info:"
+	}
+	fmt.Println(style.Render(fmt.Sprintf("%s %s", prefix, message)))
+}
+
+// ShowError displays a general error message and exits
 func ShowError(message string) {
-	fmt.Println(errorStyle.Render() + message)
+	fmt.Println(ErrorStyle.Render("Error: " + message))
 	os.Exit(1)
 }
 
-// ShowSuccess displays a success message with styling
+// ShowSuccess displays a general success message
 func ShowSuccess(message string) {
-	fmt.Println(successStyle.Render() + message)
+	fmt.Println(SuccessStyle.Render("Success: " + message))
 }
 
 // ShowQuestionHeader displays the question being asked with model info
-func ShowQuestionHeader(model, question string) {
-	header := fmt.Sprintf("🤖 Oracle (%s)", model)
-	fmt.Println(headerStyle.Render(header))
-	fmt.Println(questionStyle.Render() + question)
+func ShowQuestionHeader(model, questionText string) {
+	headerMsg := fmt.Sprintf("Oracle (%s)", model)
+	fmt.Println(HeaderStyle.Render(headerMsg))
+	fmt.Println(QuestionStyle.Render("Q: " + questionText))
 	fmt.Println()
 }
 
 // StartResponseStream initializes the response display
 func StartResponseStream() {
-	fmt.Print(responseStyle.Render("🔮 "))
-}
-
-// StreamText outputs streaming text with proper styling
-func StreamText(text string) {
-	fmt.Print(text)
+	// Simple prefix for the AI's response stream
+	fmt.Print(lipgloss.NewStyle().Foreground(pearl).Bold(true).Render("A: "))
 }
 
 // EndResponseStream finalizes the response display
 func EndResponseStream() {
-	fmt.Println()
-	fmt.Println()
-}
-
-// ShowCommandsDetected displays the detected commands
-func ShowCommandsDetected(commands []string) {
-	fmt.Println(warningStyle.Render() + "Detected executable commands:")
-	for i, cmd := range commands {
-		fmt.Printf("  %d. %s\n", i+1, cmd)
-	}
-	fmt.Println()
-}
-
-// ConfirmExecution asks user to confirm command execution
-func ConfirmExecution(command string) bool {
-	prompt := fmt.Sprintf("Execute: %s", command)
-	fmt.Print(warningStyle.Render() + prompt + " (y/N): ")
-
-	var response string
-	fmt.Scanln(&response)
-	response = strings.ToLower(strings.TrimSpace(response))
-	return response == "y" || response == "yes"
-}
-
-// ShowExecutingCommand displays that a command is being executed
-func ShowExecutingCommand(command string) {
-	fmt.Println(commandStyle.Render() + "Executing: " + command)
-}
-
-// ShowCommandError displays command execution error
-func ShowCommandError(command string, err error) {
-	fmt.Println(errorStyle.Render() + fmt.Sprintf("Command failed: %s - %v", command, err))
-}
-
-// ShowCommandSuccess displays successful command execution
-func ShowCommandSuccess(command string) {
-	fmt.Println(successStyle.Render() + "Command completed successfully")
-}
-
-// ShowStartingExecution displays start of batch execution
-func ShowStartingExecution(count int) {
-	fmt.Printf("\n%sStarting execution of %d commands...\n\n", commandStyle.Render(), count)
-}
-
-// ShowCommandProgress displays progress during batch execution
-func ShowCommandProgress(current, total int) {
-	fmt.Printf("%sCommand %d of %d:\n", commandStyle.Render(), current, total)
-}
-
-// ConfirmContinueOnError asks if execution should continue after error
-func ConfirmContinueOnError() bool {
-	fmt.Print(warningStyle.Render() + "Continue with remaining commands? (y/N): ")
-
-	var response string
-	fmt.Scanln(&response)
-	response = strings.ToLower(strings.TrimSpace(response))
-	return response == "y" || response == "yes"
-}
-
-// ShowExecutionStopped displays that execution was stopped
-func ShowExecutionStopped() {
-	fmt.Println(warningStyle.Render() + "Execution stopped by user")
-}
-
-// ShowExecutionComplete displays completion of all commands
-func ShowExecutionComplete() {
-	fmt.Println(successStyle.Render() + "All commands executed successfully!")
+	fmt.Println() // Just a newline for spacing
 }

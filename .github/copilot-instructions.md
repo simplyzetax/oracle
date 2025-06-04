@@ -1,1 +1,0 @@
-Dont run commands automatically, just give me the commands to run.

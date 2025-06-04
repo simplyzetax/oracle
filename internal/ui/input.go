@@ -8,7 +8,7 @@ import (
 // PromptForQuestion prompts the user to enter a question interactively using gum
 func PromptForQuestion() string {
 	// Use gum input via command execution for compatibility
-	cmd := exec.Command("gum", "input", "--placeholder", "Enter your question here...", "--prompt", "💭 What would you like to ask? ")
+	cmd := exec.Command("gum", "input", "--placeholder", "Enter your question here...", "--prompt", "What would you like to ask? ")
 	cmd.Stderr = os.Stderr
 
 	output, err := cmd.Output()

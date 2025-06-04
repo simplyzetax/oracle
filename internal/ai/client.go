@@ -33,20 +33,17 @@ func AskQuestion(question, apiKey, model string, enableCommands bool) {
 		return
 	}
 
-	// Enhanced system prompt to make AI provide executable commands
-	systemPrompt := `You are Oracle, an AI assistant that can provide both answers and executable shell commands. 
-When providing commands, format them clearly using:
-- Code blocks with triple backticks and bash for multi-line commands
-- Inline backticks for single commands  
-- Or prefix with $ like: $ command
+	// Simplified system prompt for commands
+	systemPrompt := `You are Oracle, an AI assistant that provides answers and executable shell commands.
+Format commands clearly using:
+- Code blocks with triple backticks for multi-line commands
+- Inline backticks for single commands
+- Prefix with $ for commands
 
-Be helpful and provide working commands when appropriate. Always explain what commands do before suggesting them. Make sure to avoid dangerous commands like "rm -rf" or "sudo rm" unless absolutely necessary. Always provide a brief and short response to avoid spamming the terminal.`
+Explain what commands do before suggesting them. Avoid dangerous commands and keep responses concise. Again, keep the response length to a maximum of 3 sentences.`
 
-	// Show the enhanced question header
+	// Show the question header
 	ui.ShowQuestionHeader(model, question)
-
-	// Stream the response and collect full text for command detection
-	ui.StartResponseStream()
 
 	var fullResponse strings.Builder
 
@@ -65,20 +62,23 @@ Be helpful and provide working commands when appropriate. Always explain what co
 
 		// Stream each chunk of text as it arrives
 		text := result.Text()
-		ui.StreamMarkdownText(text)
 		fullResponse.WriteString(text)
 	}
 
-	ui.EndResponseStream()
-
-	// Render the complete response with full markdown support
-	ui.RenderFinalResponse(fullResponse.String())
+	// Only render final response if it would look different from the streamed text
+	// This prevents duplicate text in the terminal
+	if strings.Contains(fullResponse.String(), "```") ||
+		strings.Contains(fullResponse.String(), "#") ||
+		strings.Contains(fullResponse.String(), "*") {
+		// Response likely contains markdown, so render with formatting
+		ui.RenderFinalResponse(fullResponse.String())
+	}
 
 	// Check for executable commands in the response (only if enabled)
 	if enableCommands {
 		detectedCommands := commands.ExtractCommands(fullResponse.String())
 		if len(detectedCommands) > 0 {
-			ui.ShowCommandsDetected(detectedCommands)
+			ui.ShowCommandsTable(detectedCommands) // Changed from ShowCommandsDetected
 			commandsToExecute := commands.PromptToExecute(detectedCommands)
 			if len(commandsToExecute) > 0 {
 				commands.ExecuteCommands(commandsToExecute)
