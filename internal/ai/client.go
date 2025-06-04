@@ -2,22 +2,25 @@ package ai
 
 import (
 	"context"
-	"os"
+	"fmt"
 	"strings"
 
 	"github.com/simplyzetax/oracle/internal/commands"
+	"github.com/simplyzetax/oracle/internal/config"
 	"github.com/simplyzetax/oracle/internal/ui"
 	"google.golang.org/genai"
 )
 
 // AskQuestion handles the AI interaction with streaming response and optional command execution
 func AskQuestion(question, apiKey, model string, enableCommands bool) {
-	// Get API key from parameter or environment
-	if apiKey == "" {
-		apiKey = os.Getenv("GOOGLE_AI_API_KEY")
+	// Get API key from parameter, environment, or config
+	finalAPIKey, err := config.GetAPIKey(apiKey)
+	if err != nil {
+		ui.ShowError("Failed to get API key: " + err.Error())
+		return
 	}
 
-	if apiKey == "" {
+	if finalAPIKey == "" {
 		ui.ShowError("API key is required. Set GOOGLE_AI_API_KEY environment variable or use --api-key flag")
 		return
 	}
@@ -26,7 +29,7 @@ func AskQuestion(question, apiKey, model string, enableCommands bool) {
 
 	// Create client
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{
-		APIKey: apiKey,
+		APIKey: finalAPIKey,
 	})
 	if err != nil {
 		ui.ShowError("Failed to create AI client: " + err.Error())
@@ -57,17 +60,14 @@ Explain what commands do before suggesting them. Avoid dangerous commands and ke
 			return
 		}
 
-		// Stream each chunk of text as it arrives
 		text := result.Text()
 		fullResponse.WriteString(text)
 	}
 
-	// Only render final response if it would look different from the streamed text
-	// This prevents duplicate text in the terminal
-	if strings.Contains(fullResponse.String(), "```") ||
-		strings.Contains(fullResponse.String(), "#") ||
-		strings.Contains(fullResponse.String(), "*") {
-		// Response likely contains markdown, so render with formatting
+	fmt.Println() // Add a newline after streaming is complete
+
+	// Always render the final response with fancy markdown formatting
+	if fullResponse.Len() > 0 {
 		ui.RenderFinalResponse(fullResponse.String())
 	}
 
