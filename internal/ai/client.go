@@ -42,7 +42,7 @@ When providing commands, format them clearly using:
 
 Be helpful and provide working commands when appropriate. Always explain what commands do before suggesting them. Make sure to avoid dangerous commands like "rm -rf" or "sudo rm" unless absolutely necessary. Always provide a brief and short response to avoid spamming the terminal.`
 
-	// Show the question being asked
+	// Show the enhanced question header
 	ui.ShowQuestionHeader(model, question)
 
 	// Stream the response and collect full text for command detection
@@ -65,16 +65,20 @@ Be helpful and provide working commands when appropriate. Always explain what co
 
 		// Stream each chunk of text as it arrives
 		text := result.Text()
-		ui.StreamText(text)
+		ui.StreamMarkdownText(text)
 		fullResponse.WriteString(text)
 	}
 
 	ui.EndResponseStream()
 
+	// Render the complete response with full markdown support
+	ui.RenderFinalResponse(fullResponse.String())
+
 	// Check for executable commands in the response (only if enabled)
 	if enableCommands {
 		detectedCommands := commands.ExtractCommands(fullResponse.String())
 		if len(detectedCommands) > 0 {
+			ui.ShowCommandsDetected(detectedCommands)
 			commandsToExecute := commands.PromptToExecute(detectedCommands)
 			if len(commandsToExecute) > 0 {
 				commands.ExecuteCommands(commandsToExecute)
