@@ -8,6 +8,8 @@ Oracle is a beautiful CLI tool that allows you to ask questions to AI models (cu
 - 🎨 **Beautiful UI**: Styled with Charm's Lipgloss for elegant terminal output
 - 🔄 **Streaming**: Real-time response streaming
 - 💭 **Interactive**: Prompt for questions if none provided
+- ⚡ **Command Execution**: Oracle can detect and run shell commands (with --execute flag)
+- 🛡️ **Safe Execution**: Command detection with user confirmation and safety checks
 - ⚙️ **Configurable**: Multiple models and API key options
 
 ## Installation
@@ -35,6 +37,12 @@ oracle ask "Explain quantum computing in simple terms"
 oracle ask
 ```
 
+### With command execution enabled:
+```bash
+oracle ask "How do I list all files in the current directory?" --execute
+oracle ask "Show me the Git status and stage all changes" -x
+```
+
 ### With custom model:
 ```bash
 oracle ask "Write a haiku about coding" --model gemini-pro
@@ -45,6 +53,17 @@ oracle ask "Write a haiku about coding" --model gemini-pro
 oracle ask "Hello world" --api-key your-key-here
 ```
 
+### Command execution examples:
+```bash
+# Oracle will detect commands and ask for confirmation
+oracle ask "How do I create a new Git repository?" --execute
+
+# Oracle might suggest and offer to run:
+# $ git init
+# $ git add .
+# $ git commit -m "Initial commit"
+```
+
 ## Project Structure
 
 ```
@@ -52,10 +71,13 @@ oracle/
 ├── main.go              # Application entry point
 ├── cmd/                 # Command definitions
 │   ├── root.go         # Root command and global flags
-│   └── ask.go          # Ask command implementation
+│   ├── ask.go          # Ask command implementation
+│   └── version.go      # Version command
 ├── internal/
 │   ├── ai/             # AI client and interaction logic
 │   │   └── client.go   # Gemini API client
+│   ├── commands/       # Command execution system
+│   │   └── executor.go # Command detection and execution
 │   └── ui/             # User interface and styling
 │       ├── display.go  # Output styling and display
 │       └── input.go    # User input handling

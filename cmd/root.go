@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	ApiKey string
-	Model  string
+	ApiKey         string
+	Model          string
+	EnableCommands bool
 )
 
 var RootCmd = &cobra.Command{
@@ -33,4 +34,5 @@ func Execute() {
 func init() {
 	RootCmd.PersistentFlags().StringVarP(&ApiKey, "api-key", "k", "", "Google AI API key (can also use GOOGLE_AI_API_KEY env var)")
 	RootCmd.PersistentFlags().StringVarP(&Model, "model", "m", "gemini-2.0-flash-exp", "AI model to use")
+	RootCmd.PersistentFlags().BoolVarP(&EnableCommands, "execute", "x", false, "Enable command execution (allows Oracle to run shell commands)")
 }

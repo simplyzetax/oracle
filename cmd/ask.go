@@ -34,7 +34,7 @@ Examples:
 			return
 		}
 
-		ai.AskQuestion(question, ApiKey, Model)
+		ai.AskQuestion(question, ApiKey, Model, EnableCommands)
 	},
 }
 
