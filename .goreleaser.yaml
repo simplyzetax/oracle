@@ -33,8 +33,6 @@ builds:
     binary: oracle
     ldflags:
       - -s -w -X github.com/simplyzetax/oracle/cmd.Version={{.Version}} -X github.com/simplyzetax/oracle/cmd.Commit={{.Commit}} -X github.com/simplyzetax/oracle/cmd.Date={{.Date}}
-    ldflags:
-      - -s -w -X github.com/simplyzetax/oracle/cmd.Version={{.Version}} -X github.com/simplyzetax/oracle/cmd.Commit={{.Commit}} -X github.com/simplyzetax/oracle/cmd.Date={{.Date}}
 
 archives:
   - format: tar.gz
