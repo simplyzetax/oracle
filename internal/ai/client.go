@@ -75,7 +75,6 @@ Explain what commands do before suggesting them. Avoid dangerous commands and ke
 	if enableCommands {
 		detectedCommands := commands.ExtractCommands(fullResponse.String())
 		if len(detectedCommands) > 0 {
-			ui.ShowCommandsTable(detectedCommands) // Changed from ShowCommandsDetected
 			commandsToExecute := commands.PromptToExecute(detectedCommands)
 			if len(commandsToExecute) > 0 {
 				commands.ExecuteCommands(commandsToExecute)

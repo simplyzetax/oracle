@@ -8,7 +8,6 @@ import (
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/huh"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
 )
 
 // Color palette
@@ -103,27 +102,21 @@ func RenderFinalResponse(fullText string) {
 	fmt.Println(ResponseStyle.Render(rendered))
 }
 
-// ConfirmExecution asks user to confirm command execution using huh
+// ConfirmExecution asks user to confirm command execution with a simple y/n prompt
 func ConfirmExecution(command string) bool {
 	var confirm bool
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewConfirm().
-				Title("Execute this command?").
-				Description(fmt.Sprintf("Command: %s", command)).
-				Affirmative("Yes, execute").
-				Negative("No, skip").
+				Title(fmt.Sprintf("Run `%s`?", command)).
+				Affirmative("Yes").
+				Negative("No").
 				Value(&confirm),
 		),
 	)
 	err := form.Run()
 	if err != nil {
-		// Fallback to basic text confirmation if huh fails
-		fmt.Print(lipgloss.NewStyle().Foreground(gold).Render(fmt.Sprintf("Execute: %s (y/N): ", command)))
-		var responseText string
-		fmt.Scanln(&responseText)
-		responseText = strings.ToLower(strings.TrimSpace(responseText))
-		return responseText == "y" || responseText == "yes"
+		return false
 	}
 	return confirm
 }
@@ -152,52 +145,11 @@ func ConfirmContinueOnError() bool {
 	return continueExec
 }
 
-// ShowCommandsTable displays commands in a table
-func ShowCommandsTable(commands []string) {
-	if len(commands) == 0 {
-		return
-	}
-
-	header := lipgloss.NewStyle().
-		Foreground(gold).
-		Bold(true).
-		SetString("Detected Executable Commands:")
-
-	fmt.Println(header.Render())
-	fmt.Println()
-
-	rows := make([][]string, len(commands))
-	for i, cmd := range commands {
-		rows[i] = []string{
-			fmt.Sprintf("%d", i+1),
-			cmd,
-		}
-	}
-
-	t := table.New().
-		Border(lipgloss.RoundedBorder()).
-		BorderStyle(lipgloss.NewStyle().Foreground(gold)).
-		StyleFunc(func(row, col int) lipgloss.Style {
-			if row == table.HeaderRow {
-				return lipgloss.NewStyle().
-					Foreground(gold).
-					Bold(true).
-					Align(lipgloss.Center)
-			}
-			if col == 0 { // Index column
-				return lipgloss.NewStyle().
-					Foreground(blue).
-					Bold(true).
-					Align(lipgloss.Center).
-					Width(5)
-			}
-			return lipgloss.NewStyle().Padding(0, 1) // Command column
-		}).
-		Headers("#", "Command").
-		Rows(rows...)
-
-	fmt.Println(t.Render())
-	fmt.Println()
+// ShowCommandSuggestion displays a simple command suggestion like GitHub Copilot CLI
+func ShowCommandSuggestion(command string) {
+	fmt.Printf("\n%s %s\n",
+		lipgloss.NewStyle().Foreground(green).Bold(true).Render("→"),
+		lipgloss.NewStyle().Foreground(pearl).Render(command))
 }
 
 // ShowExecutionStatus displays execution status messages
@@ -245,4 +197,87 @@ func StartResponseStream() {
 // EndResponseStream finalizes the response display
 func EndResponseStream() {
 	fmt.Println() // Just a newline for spacing
+}
+
+// ShowFirstRunWelcome displays a welcome message for first-time users
+func ShowFirstRunWelcome() {
+	welcome := lipgloss.NewStyle().
+		Foreground(blue).
+		Bold(true).
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(gold).
+		Padding(1, 2).
+		MarginTop(1).
+		MarginBottom(1).
+		Render("🔮 Welcome to Oracle CLI!\n\nThis is your first time using Oracle.\nWould you like to set up a convenient alias 'oa' for quick access?")
+
+	fmt.Println(welcome)
+}
+
+// ConfirmAliasSetup asks if user wants to set up the alias
+func ConfirmAliasSetup() bool {
+	var setupAlias bool
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewConfirm().
+				Title("Set up 'oa' alias for Oracle?").
+				Description("This will allow you to run 'oa \"question\"' instead of 'oracle ask \"question\"'").
+				Affirmative("Yes, set up alias").
+				Negative("No, thanks").
+				Value(&setupAlias),
+		),
+	)
+	err := form.Run()
+	if err != nil {
+		return false
+	}
+	return setupAlias
+}
+
+// ShowAliasInstructions displays manual alias setup instructions
+func ShowAliasInstructions() {
+	shell := os.Getenv("SHELL")
+	var configFile string
+
+	switch {
+	case strings.Contains(shell, "zsh"):
+		configFile = "~/.zshrc"
+	case strings.Contains(shell, "bash"):
+		configFile = "~/.bashrc or ~/.bash_profile"
+	case strings.Contains(shell, "fish"):
+		configFile = "~/.config/fish/config.fish"
+	default:
+		configFile = "your shell's config file"
+	}
+
+	instructions := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(blue).
+		Padding(1, 2).
+		MarginTop(1).
+		MarginBottom(1).
+		Render(fmt.Sprintf(`To set up the alias manually, add this line to %s:
+
+alias oa='oracle ask'
+
+Then run: source %s
+
+After that, you can use: oa "your question here"`, configFile, configFile))
+
+	fmt.Println(instructions)
+}
+
+// ShowAliasSetupSuccess displays success message for alias setup
+func ShowAliasSetupSuccess() {
+	success := lipgloss.NewStyle().
+		Foreground(green).
+		Bold(true).
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(green).
+		Padding(1, 2).
+		MarginTop(1).
+		MarginBottom(1).
+		Render("✅ Alias setup complete!\n\nYou can now use 'oa \"your question\"' for quick access.\nRestart your terminal or run 'source ~/.zshrc' to activate.")
+
+	fmt.Println(success)
 }

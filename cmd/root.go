@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/simplyzetax/oracle/internal/alias"
+	"github.com/simplyzetax/oracle/internal/config"
+	"github.com/simplyzetax/oracle/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -25,6 +28,30 @@ Examples:
 }
 
 func Execute() {
+	// Check for first run and offer alias setup
+	if config.IsFirstRun() {
+		ui.ShowFirstRunWelcome()
+
+		if ui.ConfirmAliasSetup() {
+			if err := alias.SetupAlias(); err != nil {
+				ui.ShowError("Failed to set up alias automatically: " + err.Error())
+				ui.ShowAliasInstructions()
+			} else {
+				ui.ShowAliasSetupSuccess()
+			}
+		} else {
+			ui.ShowAliasInstructions()
+		}
+
+		// Mark first run as complete
+		if err := config.MarkFirstRunComplete(); err != nil {
+			// Non-fatal error, just continue
+			fmt.Printf("Warning: Could not mark first run as complete: %v\n", err)
+		}
+
+		fmt.Println() // Add spacing
+	}
+
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

@@ -1,0 +1,130 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - "386"
+      - amd64
+      - arm
+      - arm64
+    ignore:
+      - goos: darwin
+        goarch: "386"
+      - goos: linux
+        goarch: "386"
+      - goos: windows
+        goarch: "386"
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarch: arm64
+    main: ./main.go
+    id: "oracle"
+    binary: oracle
+
+archives:
+  - format: tar.gz
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        format: zip
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+# Homebrew configuration
+brews:
+  - 
+    # Name of the recipe
+    name: oracle
+    
+    # GitHub repository to push the formula to
+    repository:
+      owner: simplyzetax
+      name: homebrew-oracle
+      branch: main
+      
+    # Git author used to commit to the repository
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+      
+    # Your app's homepage
+    homepage: "https://github.com/simplyzetax/oracle"
+    
+    # Your app's description
+    description: "Oracle CLI - AI-powered question answering with Google Gemini"
+    
+    # SPDX identifier of your app's license
+    license: "MIT"
+    
+    # Setting this will prevent goreleaser to actually try to commit the updated
+    # formula - instead, the formula file will be stored on the dist folder only,
+    # leaving the responsibility of publishing it to the user.
+    skip_upload: false
+    
+    # Custom install script for the application
+    install: |
+      bin.install "oracle"
+      
+      # Create completion scripts
+      output = Utils.safe_popen_read("#{bin}/oracle", "completion", "bash")
+      (bash_completion/"oracle").write output
+      
+      output = Utils.safe_popen_read("#{bin}/oracle", "completion", "zsh")
+      (zsh_completion/"_oracle").write output
+      
+      output = Utils.safe_popen_read("#{bin}/oracle", "completion", "fish")
+      (fish_completion/"oracle.fish").write output
+    
+    # Custom test script for the application
+    test: |
+      system "#{bin}/oracle", "version"
+
+# Docker configuration
+dockers:
+  - image_templates:
+      - "ghcr.io/simplyzetax/oracle:{{ .Tag }}"
+      - "ghcr.io/simplyzetax/oracle:latest"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/amd64"
+
+# macOS Universal Binary
+universal_binaries:
+  - replace: true
