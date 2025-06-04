@@ -14,16 +14,6 @@ Oracle is a CLI tool that allows you to ask questions to AI models (currently Ge
 
 ## Installation
 
-### Homebrew (macOS/Linux)
-
-```bash
-# Add the tap
-brew tap simplyzetax/oracle
-
-# Install oracle
-brew install oracle
-```
-
 ### From Source
 
 1. Clone the repository

@@ -12,14 +12,14 @@ func GetConfigDir() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	configDir := filepath.Join(homeDir, ".oracle")
-	
+
 	// Create config directory if it doesn't exist
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		return "", err
 	}
-	
+
 	return configDir, nil
 }
 
@@ -38,7 +38,7 @@ func IsFirstRun() bool {
 	if err != nil {
 		return true // Assume first run if we can't check
 	}
-	
+
 	_, err = os.Stat(firstRunFile)
 	return os.IsNotExist(err)
 }
@@ -49,14 +49,14 @@ func MarkFirstRunComplete() error {
 	if err != nil {
 		return err
 	}
-	
+
 	file, err := os.Create(firstRunFile)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-	
-	_, err = file.WriteString(fmt.Sprintf("First run completed at: %s\n", 
+
+	_, err = file.WriteString(fmt.Sprintf("First run completed at: %s\n",
 		os.Getenv("USER")))
 	return err
 }

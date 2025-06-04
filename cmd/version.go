@@ -9,7 +9,7 @@ import (
 var (
 	// Version will be set during build time
 	Version = "dev"
-	// Commit will be set during build time  
+	// Commit will be set during build time
 	Commit = "none"
 	// Date will be set during build time
 	Date = "unknown"
