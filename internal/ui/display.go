@@ -236,14 +236,6 @@ func ShowSuccess(message string) {
 	fmt.Println(SuccessStyle.Render("Success: " + message))
 }
 
-// ShowQuestionHeader displays the question being asked with model info
-func ShowQuestionHeader(model, questionText string) {
-	headerMsg := fmt.Sprintf("Oracle (%s)", model)
-	fmt.Println(HeaderStyle.Render(headerMsg))
-	fmt.Println(QuestionStyle.Render("Q: " + questionText))
-	fmt.Println()
-}
-
 // StartResponseStream initializes the response display
 func StartResponseStream() {
 	// Simple prefix for the AI's response stream

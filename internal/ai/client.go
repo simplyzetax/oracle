@@ -42,9 +42,6 @@ Format commands clearly using:
 
 Explain what commands do before suggesting them. Avoid dangerous commands and keep responses concise. Again, keep the response length to a maximum of 3 sentences.`
 
-	// Show the question header
-	ui.ShowQuestionHeader(model, question)
-
 	var fullResponse strings.Builder
 
 	for result, err := range client.Models.GenerateContentStream(
